@@ -1,0 +1,254 @@
+<html><head><base href=""><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Break Time</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+    overflow: hidden;
+}
+.container {
+    text-align: center;
+    background-color: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+h1 {
+    font-size: 5rem;
+    margin-bottom: 1rem;
+    transition: color 0.3s ease;
+}
+.timer {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+.inputs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+input {
+    width: 60px;
+    padding: 0.5rem;
+    font-size: 1rem;
+    text-align: center;
+}
+button {
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+button.start {
+    background-color: #4CAF50;
+}
+button.stop {
+    background-color: #f44336;
+}
+button:hover {
+    opacity: 0.9;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(255, 0, 128, 0.5);
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 40px 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    text-align: center;
+    position: relative;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+.modal-content h2 {
+    font-size: 4rem;
+    color: black;
+    margin: 0;
+    padding: 0;
+}
+.close {
+    color: #aaa;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+.background-text {
+    position: fixed;
+    font-size: 50px;
+    font-weight: bold;
+    opacity: 0.2;
+    pointer-events: none;
+    z-index: 1;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1 id="title">Break Time!!</h1>
+    <div class="timer" id="timer">00:00:00</div>
+    <div class="inputs">
+        <input type="number" id="hours" min="0" placeholder="Hours">
+        <input type="number" id="minutes" min="0" placeholder="Minutes">
+        <input type="number" id="seconds" min="0" placeholder="Seconds">
+    </div>
+    <button id="startStop" class="start">Empezar</button>
+</div>
+
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Estamos de vuelta</h2>
+    </div>
+</div>
+
+<script>
+let timer;
+let timeLeft;
+let animationFrameId;
+const title = document.getElementById('title');
+const timerDisplay = document.getElementById('timer');
+const startStopButton = document.getElementById('startStop');
+const modal = document.getElementById('modal');
+const closeBtn = document.querySelector('.close');
+
+function updateDisplay(time) {
+    const hours = Math.floor(time / 3600).toString().padStart(2, '0');
+    const minutes = Math.floor((time % 3600) / 60).toString().padStart(2, '0');
+    const seconds = (time % 60).toString().padStart(2, '0');
+    timerDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+}
+
+function startTimer() {
+    const hours = parseInt(document.getElementById('hours').value) || 0;
+    const minutes = parseInt(document.getElementById('minutes').value) || 0;
+    const seconds = parseInt(document.getElementById('seconds').value) || 0;
+    timeLeft = hours * 3600 + minutes * 60 + seconds;
+
+    if (timeLeft <= 0) return;
+
+    title.style.color = 'green';
+    startStopButton.textContent = 'Parar';
+    startStopButton.classList.remove('start');
+    startStopButton.classList.add('stop');
+
+    startBackgroundAnimation();
+
+    timer = setInterval(() => {
+        timeLeft--;
+        updateDisplay(timeLeft);
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            resetTimer();
+            stopBackgroundAnimation();
+            modal.style.display = 'block';
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timer);
+    resetTimer();
+    stopBackgroundAnimation();
+}
+
+function resetTimer() {
+    title.style.color = 'black';
+    startStopButton.textContent = 'Empezar';
+    startStopButton.classList.remove('stop');
+    startStopButton.classList.add('start');
+}
+
+function startBackgroundAnimation() {
+    createBackgroundText();
+    animateBackgroundText();
+}
+
+function stopBackgroundAnimation() {
+    cancelAnimationFrame(animationFrameId);
+    document.querySelectorAll('.background-text').forEach(el => el.remove());
+}
+
+function createBackgroundText() {
+    for (let i = 0; i < 20; i++) {
+        const text = document.createElement('div');
+        text.textContent = 'Break';
+        text.classList.add('background-text');
+        text.style.left = `${Math.random() * 100}vw`;
+        text.style.top = `${Math.random() * 100}vh`;
+        text.style.color = getRandomColor();
+        document.body.appendChild(text);
+    }
+}
+
+function animateBackgroundText() {
+    document.querySelectorAll('.background-text').forEach(text => {
+        const x = parseFloat(text.style.left);
+        const y = parseFloat(text.style.top);
+        text.style.left = `${(x + 0.1) % 100}vw`;
+        text.style.top = `${(y + 0.1) % 100}vh`;
+    });
+    animationFrameId = requestAnimationFrame(animateBackgroundText);
+}
+
+function getRandomColor() {
+    return `hsl(${Math.random() * 360}, 100%, 50%)`;
+}
+
+startStopButton.addEventListener('click', () => {
+    if (startStopButton.textContent === 'Empezar') {
+        startTimer();
+    } else {
+        stopTimer();
+    }
+});
+
+closeBtn.onclick = function() {
+    modal.style.display = "none";
+}
+
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+
+updateDisplay(0);
+</script>
+</body>
+</html>

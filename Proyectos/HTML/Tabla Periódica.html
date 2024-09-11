@@ -1,0 +1,408 @@
+<html><head><base href="https://interactive.periodic.table">
+<title>Tabla Periódica Interactiva Completa</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        font-family: 'Arial', sans-serif;
+        background-color: #f0f8ff;
+        color: #333;
+    }
+    .container {
+        max-width: 1800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    h1 {
+        text-align: center;
+        font-size: 2.5em;
+        margin-bottom: 30px;
+        color: #0056b3;
+    }
+    .periodic-table {
+        display: grid;
+        grid-template-columns: repeat(18, 1fr);
+        gap: 2px;
+        background-color: #fff;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    .element {
+        aspect-ratio: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        padding: 4px;
+        font-size: 0.7vw;
+        position: relative;
+    }
+    .element:hover {
+        transform: scale(1.1);
+        z-index: 1;
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+    .symbol {
+        font-size: 1.8em;
+        font-weight: bold;
+    }
+    .number {
+        font-size: 0.8em;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+    }
+    .name {
+        font-size: 0.6em;
+        text-align: center;
+        margin-top: 2px;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 2;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.6);
+    }
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 600px;
+        border-radius: 10px;
+        position: relative;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .close:hover {
+        color: #000;
+    }
+    .legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 20px;
+        background-color: #fff;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin: 5px 10px;
+    }
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        margin-right: 5px;
+        border-radius: 3px;
+    }
+    .lanthanides, .actinides {
+        grid-column: 4 / -1;
+        display: grid;
+        grid-template-columns: repeat(15, 1fr);
+        gap: 2px;
+        margin-top: 10px;
+    }
+    .lanthanides::before, .actinides::before {
+        content: attr(data-label);
+        grid-column: 1 / span 3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        background-color: #f0f0f0;
+        border-radius: 5px;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        transform: rotate(180deg);
+        padding: 5px;
+    }
+    @media (max-width: 1200px) {
+        .element {
+            font-size: 1.2vw;
+        }
+    }
+    @media (max-width: 768px) {
+        .element {
+            font-size: 2vw;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Tabla Periódica de los Elementos Químicos</h1>
+    <div class="periodic-table" id="periodicTable"></div>
+    <div class="legend" id="legend"></div>
+</div>
+
+<div id="elementModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="modalTitle"></h2>
+        <p id="modalInfo"></p>
+    </div>
+</div>
+
+<script>
+const elements = [
+    {symbol: 'H', name: 'Hidrógeno', number: 1, category: 'No metal', state: 'Gas', group: 1, period: 1, block: 's', electronConfig: '1s¹', atomicMass: 1.008, electronegativity: 2.20, density: 0.00008988},
+    {symbol: 'He', name: 'Helio', number: 2, category: 'Gas noble', state: 'Gas', group: 18, period: 1, block: 's', electronConfig: '1s²', atomicMass: 4.003, electronegativity: null, density: 0.0001785},
+    {symbol: 'Li', name: 'Litio', number: 3, category: 'Metal alcalino', state: 'Sólido', group: 1, period: 2, block: 's', electronConfig: '[He] 2s¹', atomicMass: 6.94, electronegativity: 0.98, density: 0.534},
+    {symbol: 'Be', name: 'Berilio', number: 4, category: 'Metal alcalinotérreo', state: 'Sólido', group: 2, period: 2, block: 's', electronConfig: '[He] 2s²', atomicMass: 9.012, electronegativity: 1.57, density: 1.85},
+    {symbol: 'B', name: 'Boro', number: 5, category: 'Metaloide', state: 'Sólido', group: 13, period: 2, block: 'p', electronConfig: '[He] 2s² 2p¹', atomicMass: 10.81, electronegativity: 2.04, density: 2.34},
+    {symbol: 'C', name: 'Carbono', number: 6, category: 'No metal', state: 'Sólido', group: 14, period: 2, block: 'p', electronConfig: '[He] 2s² 2p²', atomicMass: 12.01, electronegativity: 2.55, density: 2.267},
+    {symbol: 'N', name: 'Nitrógeno', number: 7, category: 'No metal', state: 'Gas', group: 15, period: 2, block: 'p', electronConfig: '[He] 2s² 2p³', atomicMass: 14.01, electronegativity: 3.04, density: 0.001251},
+    {symbol: 'O', name: 'Oxígeno', number: 8, category: 'No metal', state: 'Gas', group: 16, period: 2, block: 'p', electronConfig: '[He] 2s² 2p⁴', atomicMass: 16.00, electronegativity: 3.44, density: 0.001429},
+    {symbol: 'F', name: 'Flúor', number: 9, category: 'Halógeno', state: 'Gas', group: 17, period: 2, block: 'p', electronConfig: '[He] 2s² 2p⁵', atomicMass: 19.00, electronegativity: 3.98, density: 0.001696},
+    {symbol: 'Ne', name: 'Neón', number: 10, category: 'Gas noble', state: 'Gas', group: 18, period: 2, block: 'p', electronConfig: '[He] 2s² 2p⁶', atomicMass: 20.18, electronegativity: null, density: 0.0008999},
+    {symbol: 'Na', name: 'Sodio', number: 11, category: 'Metal alcalino', state: 'Sólido', group: 1, period: 3, block: 's', electronConfig: '[Ne] 3s¹', atomicMass: 22.99, electronegativity: 0.93, density: 0.971},
+    {symbol: 'Mg', name: 'Magnesio', number: 12, category: 'Metal alcalinotérreo', state: 'Sólido', group: 2, period: 3, block: 's', electronConfig: '[Ne] 3s²', atomicMass: 24.31, electronegativity: 1.31, density: 1.738},
+    {symbol: 'Al', name: 'Aluminio', number: 13, category: 'Metal del bloque p', state: 'Sólido', group: 13, period: 3, block: 'p', electronConfig: '[Ne] 3s² 3p¹', atomicMass: 26.98, electronegativity: 1.61, density: 2.698},
+    {symbol: 'Si', name: 'Silicio', number: 14, category: 'Metaloide', state: 'Sólido', group: 14, period: 3, block: 'p', electronConfig: '[Ne] 3s² 3p²', atomicMass: 28.09, electronegativity: 1.90, density: 2.3296},
+    {symbol: 'P', name: 'Fósforo', number: 15, category: 'No metal', state: 'Sólido', group: 15, period: 3, block: 'p', electronConfig: '[Ne] 3s² 3p³', atomicMass: 30.97, electronegativity: 2.19, density: 1.82},
+    {symbol: 'S', name: 'Azufre', number: 16, category: 'No metal', state: 'Sólido', group: 16, period: 3, block: 'p', electronConfig: '[Ne] 3s² 3p⁴', atomicMass: 32.07, electronegativity: 2.58, density: 2.067},
+    {symbol: 'Cl', name: 'Cloro', number: 17, category: 'Halógeno', state: 'Gas', group: 17, period: 3, block: 'p', electronConfig: '[Ne] 3s² 3p⁵', atomicMass: 35.45, electronegativity: 3.16, density: 0.003214},
+    {symbol: 'Ar', name: 'Argón', number: 18, category: 'Gas noble', state: 'Gas', group: 18, period: 3, block: 'p', electronConfig: '[Ne] 3s² 3p⁶', atomicMass: 39.95, electronegativity: null, density: 0.0017837},
+    {symbol: 'K', name: 'Potasio', number: 19, category: 'Metal alcalino', state: 'Sólido', group: 1, period: 4, block: 's', electronConfig: '[Ar] 4s¹', atomicMass: 39.10, electronegativity: 0.82, density: 0.862},
+    {symbol: 'Ca', name: 'Calcio', number: 20, category: 'Metal alcalinotérreo', state: 'Sólido', group: 2, period: 4, block: 's', electronConfig: '[Ar] 4s²', atomicMass: 40.08, electronegativity: 1.00, density: 1.54},
+    {symbol: 'Sc', name: 'Escandio', number: 21, category: 'Metal de transición', state: 'Sólido', group: 3, period: 4, block: 'd', electronConfig: '[Ar] 3d¹ 4s²', atomicMass: 44.96, electronegativity: 1.36, density: 2.989},
+    {symbol: 'Ti', name: 'Titanio', number: 22, category: 'Metal de transición', state: 'Sólido', group: 4, period: 4, block: 'd', electronConfig: '[Ar] 3d² 4s²', atomicMass: 47.87, electronegativity: 1.54, density: 4.54},
+    {symbol: 'V', name: 'Vanadio', number: 23, category: 'Metal de transición', state: 'Sólido', group: 5, period: 4, block: 'd', electronConfig: '[Ar] 3d³ 4s²', atomicMass: 50.94, electronegativity: 1.63, density: 6.11},
+    {symbol: 'Cr', name: 'Cromo', number: 24, category: 'Metal de transición', state: 'Sólido', group: 6, period: 4, block: 'd', electronConfig: '[Ar] 3d⁵ 4s¹', atomicMass: 52.00, electronegativity: 1.66, density: 7.15},
+    {symbol: 'Mn', name: 'Manganeso', number: 25, category: 'Metal de transición', state: 'Sólido', group: 7, period: 4, block: 'd', electronConfig: '[Ar] 3d⁵ 4s²', atomicMass: 54.94, electronegativity: 1.55, density: 7.44},
+    {symbol: 'Fe', name: 'Hierro', number: 26, category: 'Metal de transición', state: 'Sólido', group: 8, period: 4, block: 'd', electronConfig: '[Ar] 3d⁶ 4s²', atomicMass: 55.85, electronegativity: 1.83, density: 7.874},
+    {symbol: 'Co', name: 'Cobalto', number: 27, category: 'Metal de transición', state: 'Sólido', group: 9, period: 4, block: 'd', electronConfig: '[Ar] 3d⁷ 4s²', atomicMass: 58.93, electronegativity: 1.88, density: 8.86},
+    {symbol: 'Ni', name: 'Níquel', number: 28, category: 'Metal de transición', state: 'Sólido', group: 10, period: 4, block: 'd', electronConfig: '[Ar] 3d⁸ 4s²', atomicMass: 58.69, electronegativity: 1.91, density: 8.912},
+    {symbol: 'Cu', name: 'Cobre', number: 29, category: 'Metal de transición', state: 'Sólido', group: 11, period: 4, block: 'd', electronConfig: '[Ar] 3d¹⁰ 4s¹', atomicMass: 63.55, electronegativity: 1.90, density: 8.96},
+    {symbol: 'Zn', name: 'Zinc', number: 30, category: 'Metal de transición', state: 'Sólido', group: 12, period: 4, block: 'd', electronConfig: '[Ar] 3d¹⁰ 4s²', atomicMass: 65.38, electronegativity: 1.65, density: 7.134},
+    {symbol: 'Ga', name: 'Galio', number: 31, category: 'Metal del bloque p', state: 'Sólido', group: 13, period: 4, block: 'p', electronConfig: '[Ar] 3d¹⁰ 4s² 4p¹', atomicMass: 69.72, electronegativity: 1.81, density: 5.907},
+    {symbol: 'Ge', name: 'Germanio', number: 32, category: 'Metaloide', state: 'Sólido', group: 14, period: 4, block: 'p', electronConfig: '[Ar] 3d¹⁰ 4s² 4p²', atomicMass: 72.63, electronegativity: 2.01, density: 5.323},
+    {symbol: 'As', name: 'Arsénico', number: 33, category: 'Metaloide', state: 'Sólido', group: 15, period: 4, block: 'p', electronConfig: '[Ar] 3d¹⁰ 4s² 4p³', atomicMass: 74.92, electronegativity: 2.18, density: 5.776},
+    {symbol: 'Se', name: 'Selenio', number: 34, category: 'No metal', state: 'Sólido', group: 16, period: 4, block: 'p', electronConfig: '[Ar] 3d¹⁰ 4s² 4p⁴', atomicMass: 78.97, electronegativity: 2.55, density: 4.809},
+    {symbol: 'Br', name: 'Bromo', number: 35, category: 'Halógeno', state: 'Líquido', group: 17, period: 4, block: 'p', electronConfig: '[Ar] 3d¹⁰ 4s² 4p⁵', atomicMass: 79.90, electronegativity: 2.96, density: 3.122},
+    {symbol: 'Kr', name: 'Kriptón', number: 36, category: 'Gas noble', state: 'Gas', group: 18, period: 4, block: 'p', electronConfig: '[Ar] 3d¹⁰ 4s² 4p⁶', atomicMass: 83.80, electronegativity: 3.00, density: 0.003733},
+    {symbol: 'Rb', name: 'Rubidio', number: 37, category: 'Metal alcalino', state: 'Sólido', group: 1, period: 5, block: 's', electronConfig: '[Kr] 5s¹', atomicMass: 85.47, electronegativity: 0.82, density: 1.532},
+    {symbol: 'Sr', name: 'Estroncio', number: 38, category: 'Metal alcalinotérreo', state: 'Sólido', group: 2, period: 5, block: 's', electronConfig: '[Kr] 5s²', atomicMass: 87.62, electronegativity: 0.95, density: 2.64},
+    {symbol: 'Y', name: 'Itrio', number: 39, category: 'Metal de transición', state: 'Sólido', group: 3, period: 5, block: 'd', electronConfig: '[Kr] 4d¹ 5s²', atomicMass: 88.91, electronegativity: 1.22, density: 4.469},
+    {symbol: 'Zr', name: 'Zirconio', number: 40, category: 'Metal de transición', state: 'Sólido', group: 4, period: 5, block: 'd', electronConfig: '[Kr] 4d² 5s²', atomicMass: 91.22, electronegativity: 1.33, density: 6.506},
+    {symbol: 'Nb', name: 'Niobio', number: 41, category: 'Metal de transición', state: 'Sólido', group: 5, period: 5, block: 'd', electronConfig: '[Kr] 4d⁴ 5s¹', atomicMass: 92.91, electronegativity: 1.6, density: 8.57},
+    {symbol: 'Mo', name: 'Molibdeno', number: 42, category: 'Metal de transición', state: 'Sólido', group: 6, period: 5, block: 'd', electronConfig: '[Kr] 4d⁵ 5s¹', atomicMass: 95.95, electronegativity: 2.16, density: 10.22},
+    {symbol: 'Tc', name: 'Tecnecio', number: 43, category: 'Metal de transición', state: 'Sólido', group: 7, period: 5, block: 'd', electronConfig: '[Kr] 4d⁵ 5s²', atomicMass: 98, electronegativity: 1.9, density: 11.5},
+    {symbol: 'Ru', name: 'Rutenio', number: 44, category: 'Metal de transición', state: 'Sólido', group: 8, period: 5, block: 'd', electronConfig: '[Kr] 4d⁷ 5s¹', atomicMass: 101.07, electronegativity: 2.2, density: 12.37},
+    {symbol: 'Rh', name: 'Rodio', number: 45, category: 'Metal de transición', state: 'Sólido', group: 9, period: 5, block: 'd', electronConfig: '[Kr] 4d⁸ 5s¹', atomicMass: 102.91, electronegativity: 2.28, density: 12.41},
+    {symbol: 'Pd', name: 'Paladio', number: 46, category: 'Metal de transición', state: 'Sólido', group: 10, period: 5, block: 'd', electronConfig: '[Kr] 4d¹⁰', atomicMass: 106.42, electronegativity: 2.20, density: 12.02},
+    {symbol: 'Ag', name: 'Plata', number: 47, category: 'Metal de transición', state: 'Sólido', group: 11, period: 5, block: 'd', electronConfig: '[Kr] 4d¹⁰ 5s¹', atomicMass: 107.87, electronegativity: 1.93, density: 10.501},
+    {symbol: 'Cd', name: 'Cadmio', number: 48, category: 'Metal de transición', state: 'Sólido', group: 12, period: 5, block: 'd', electronConfig: '[Kr] 4d¹⁰ 5s²', atomicMass: 112.41, electronegativity: 1.69, density: 8.69},
+    {symbol: 'In', name: 'Indio', number: 49, category: 'Metal del bloque p', state: 'Sólido', group: 13, period: 5, block: 'p', electronConfig: '[Kr] 4d¹⁰ 5s² 5p¹', atomicMass: 114.82, electronegativity: 1.78, density: 7.31},
+    {symbol: 'Sn', name: 'Estaño', number: 50, category: 'Metal del bloque p', state: 'Sólido', group: 14, period: 5, block: 'p', electronConfig: '[Kr] 4d¹⁰ 5s² 5p²', atomicMass: 118.71, electronegativity: 1.96, density: 7.287},
+    {symbol: 'Sb', name: 'Antimonio', number: 51, category: 'Metaloide', state: 'Sólido', group: 15, period: 5, block: 'p', electronConfig: '[Kr] 4d¹⁰ 5s² 5p³', atomicMass: 121.76, electronegativity: 2.05, density: 6.685},
+    {symbol: 'Te', name: 'Telurio', number: 52, category: 'Metaloide', state: 'Sólido', group: 16, period: 5, block: 'p', electronConfig: '[Kr] 4d¹⁰ 5s² 5p⁴', atomicMass: 127.60, electronegativity: 2.1, density: 6.232},
+    {symbol: 'I', name: 'Yodo', number: 53, category: 'Halógeno', state: 'Sólido', group: 17, period: 5, block: 'p', electronConfig: '[Kr] 4d¹⁰ 5s² 5p⁵', atomicMass: 126.90, electronegativity: 2.66, density: 4.93},
+    {symbol: 'Xe', name: 'Xenón', number: 54, category: 'Gas noble', state: 'Gas', group: 18, period: 5, block: 'p', electronConfig: '[Kr] 4d¹⁰ 5s² 5p⁶', atomicMass: 131.29, electronegativity: 2.6, density: 0.005887},
+    {symbol: 'Cs', name: 'Cesio', number: 55, category: 'Metal alcalino', state: 'Sólido', group: 1, period: 6, block: 's', electronConfig: '[Xe] 6s¹', atomicMass: 132.91, electronegativity: 0.79, density: 1.873},
+    {symbol: 'Ba', name: 'Bario', number: 56, category: 'Metal alcalinotérreo', state: 'Sólido', group: 2, period: 6, block: 's', electronConfig: '[Xe] 6s²', atomicMass: 137.33, electronegativity: 0.89, density: 3.594},
+    {symbol: 'La', name: 'Lantano', number: 57, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 5d¹ 6s²', atomicMass: 138.91, electronegativity: 1.10, density: 6.145},
+    {symbol: 'Ce', name: 'Cerio', number: 58, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f¹ 5d¹ 6s²', atomicMass: 140.12, electronegativity: 1.12, density: 6.77},
+    {symbol: 'Pr', name: 'Praseodimio', number: 59, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f³ 6s²', atomicMass: 140.91, electronegativity: 1.13, density: 6.773},
+    {symbol: 'Nd', name: 'Neodimio', number: 60, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f⁴ 6s²', atomicMass: 144.24, electronegativity: 1.14, density: 7.007},
+    {symbol: 'Pm', name: 'Prometio', number: 61, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f⁵ 6s²', atomicMass: 145, electronegativity: 1.13, density: 7.26},
+    {symbol: 'Sm', name: 'Samario', number: 62, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f⁶ 6s²', atomicMass: 150.36, electronegativity: 1.17, density: 7.52},
+    {symbol: 'Eu', name: 'Europio', number: 63, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f⁷ 6s²', atomicMass: 151.96, electronegativity: 1.2, density: 5.243},
+    {symbol: 'Gd', name: 'Gadolinio', number: 64, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f⁷ 5d¹ 6s²', atomicMass: 157.25, electronegativity: 1.2, density: 7.895},
+    {symbol: 'Tb', name: 'Terbio', number: 65, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f⁹ 6s²', atomicMass: 158.93, electronegativity: 1.2, density: 8.229},
+    {symbol: 'Dy', name: 'Disprosio', number: 66, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f¹⁰ 6s²', atomicMass: 162.50, electronegativity: 1.22, density: 8.55},
+    {symbol: 'Ho', name: 'Holmio', number: 67, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f¹¹ 6s²', atomicMass: 164.93, electronegativity: 1.23, density: 8.79},
+    {symbol: 'Er', name: 'Erbio', number: 68, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f¹² 6s²', atomicMass: 167.26, electronegativity: 1.24, density: 9.066},
+    {symbol: 'Tm', name: 'Tulio', number: 69, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f¹³ 6s²', atomicMass: 168.93, electronegativity: 1.25, density: 9.321},
+    {symbol: 'Yb', name: 'Iterbio', number: 70, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'f', electronConfig: '[Xe] 4f¹⁴ 6s²', atomicMass: 173.05, electronegativity: 1.1, density: 6.965},
+    {symbol: 'Lu', name: 'Lutecio', number: 71, category: 'Lantánido', state: 'Sólido', group: 3, period: 6, block: 'd', electronConfig: '[Xe] 4f¹⁴ 5d¹ 6s²', atomicMass: 174.97, electronegativity: 1.27, density: 9.84},
+    {symbol: 'Hf', name: 'Hafnio', number: 72, category: 'Metal de transición', state: 'Sólido', group: 4, period: 6, block: 'd', electronConfig: '[Xe] 4f¹⁴ 5d² 6s²', atomicMass: 178.49, electronegativity: 1.3, density: 13.31},
+    {symbol: 'Ta', name: 'Tantalio', number: 73, category: 'Metal de transición', state: 'Sólido', group: 5, period: 6, block: 'd', electronConfig: '[Xe] 4f¹⁴ 5d³ 6s²', atomicMass: 180.95, electronegativity: 1.5, density: 16.654},
+    {symbol: 'W', name: 'Wolframio', number: 74, category: 'Metal de transición', state: 'Sólido', group: 6, period: 6, block: 'd', electronConfig: '[Xe] 4f¹⁴ 5d⁴ 6s²', atomicMass: 183.84, electronegativity: 2.36, density: 19.25},
+    {symbol: 'Re', name: 'Renio', number: 75, category: 'Metal de transición', state: 'Sólido', group: 7, period: 6, block: 'd', electronConfig: '[Xe] 4f¹⁴ 5d⁵ 6s²', atomicMass: 186.21, electronegativity: 1.9, density: 21.02},
+    {symbol: 'Os', name: 'Osmio', number: 76, category: 'Metal de transición', state: 'Sólido', group: 8, period: 6, block: 'd', electronConfig: '[Xe] 4f¹⁴ 5d⁶ 6s²', atomicMass: 190.23, electronegativity: 2.2, density: 22.61},
+    {symbol: 'Ir', name: 'Iridio', number: 77, category: 'Metal de transición', state: 'Sólido', group: 9, period: 6, block: 'd', electronConfig: '[Xe] 4f¹⁴ 5d⁷ 6s²', atomicMass: 192.22, electronegativity: 2.20, density: 22.56},
+    {symbol: 'Pt', name: 'Platino', number: 78, category: 'Metal de transición', state: 'Sólido', group: 10, period: 6, block: 'd', electronConfig: '[Xe] 4f¹⁴ 5d⁹ 6s¹', atomicMass: 195.08, electronegativity: 2.28, density: 21.45},
+    {symbol: 'Au', name: 'Oro', number: 79, category: 'Metal de transición', state: 'Sólido', group: 11, period: 6, block: 'd', electronConfig: '[Xe] 4f¹⁴ 5d¹⁰ 6s¹', atomicMass: 196.97, electronegativity: 2.54, density: 19.3},
+    {symbol: 'Hg', name: 'Mercurio', number: 80, category: 'Metal de transición', state: 'Líquido', group: 12, period: 6, block: 'd', electronConfig: '[Xe] 4f¹⁴ 5d¹⁰ 6s²', atomicMass: 200.59, electronegativity: 2.00, density: 13.534},
+    {symbol: 'Tl', name: 'Talio', number: 81, category: 'Metal del bloque p', state: 'Sólido', group: 13, period: 6, block: 'p', electronConfig: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹', atomicMass: 204.38, electronegativity: 1.62, density: 11.85},
+    {symbol: 'Pb', name: 'Plomo', number: 82, category: 'Metal del bloque p', state: 'Sólido', group: 14, period: 6, block: 'p', electronConfig: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²', atomicMass: 207.2, electronegativity: 2.33, density: 11.34},
+    {symbol: 'Bi', name: 'Bismuto', number: 83, category: 'Metal del bloque p', state: 'Sólido', group: 15, period: 6, block: 'p', electronConfig: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³', atomicMass: 208.98, electronegativity: 2.02, density: 9.78},
+    {symbol: 'Po', name: 'Polonio', number: 84, category: 'Metaloide', state: 'Sólido', group: 16, period: 6, block: 'p', electronConfig: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴', atomicMass: 209, electronegativity: 2.0, density: 9.196},
+    {symbol: 'At', name: 'Astato', number: 85, category: 'Halógeno', state: 'Sólido', group: 17, period: 6, block: 'p', electronConfig: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵', atomicMass: 210, electronegativity: 2.2, density: 7},
+    {symbol: 'Rn', name: 'Radón', number: 86, category: 'Gas noble', state: 'Gas', group: 18, period: 6, block: 'p', electronConfig: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶', atomicMass: 222, electronegativity: 2.2, density: 0.00973},
+    {symbol: 'Fr', name: 'Francio', number: 87, category: 'Metal alcalino', state: 'Sólido', group: 1, period: 7, block: 's', electronConfig: '[Rn] 7s¹', atomicMass: 223, electronegativity: 0.7, density: 1.87},
+    {symbol: 'Ra', name: 'Radio', number: 88, category: 'Metal alcalinotérreo', state: 'Sólido', group: 2, period: 7, block: 's', electronConfig: '[Rn] 7s²', atomicMass: 226, electronegativity: 0.9, density: 5.5},
+    {symbol: 'Ac', name: 'Actinio', number: 89, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 6d¹ 7s²', atomicMass: 227, electronegativity: 1.1, density: 10.07},
+    {symbol: 'Th', name: 'Torio', number: 90, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 6d² 7s²', atomicMass: 232.04, electronegativity: 1.3, density: 11.72},
+    {symbol: 'Pa', name: 'Protactinio', number: 91, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f² 6d¹ 7s²', atomicMass: 231.04, electronegativity: 1.5, density: 15.37},
+    {symbol: 'U', name: 'Uranio', number: 92, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f³ 6d¹ 7s²', atomicMass: 238.03, electronegativity: 1.38, density: 18.95},
+    {symbol: 'Np', name: 'Neptunio', number: 93, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f⁴ 6d¹ 7s²', atomicMass: 237, electronegativity: 1.36, density: 20.45},
+    {symbol: 'Pu', name: 'Plutonio', number: 94, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f⁶ 7s²', atomicMass: 244, electronegativity: 1.28, density: 19.84},
+    {symbol: 'Am', name: 'Americio', number: 95, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f⁷ 7s²', atomicMass: 243, electronegativity: 1.3, density: 13.69},
+    {symbol: 'Cm', name: 'Curio', number: 96, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f⁷ 6d¹ 7s²', atomicMass: 247, electronegativity: 1.3, density: 13.51},
+    {symbol: 'Bk', name: 'Berkelio', number: 97, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f⁹ 7s²', atomicMass: 247, electronegativity: 1.3, density: 14.79},
+    {symbol: 'Cf', name: 'Californio', number: 98, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f¹⁰ 7s²', atomicMass: 251, electronegativity: 1.3, density: 15.1},
+    {symbol: 'Es', name: 'Einstenio', number: 99, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f¹¹ 7s²', atomicMass: 252, electronegativity: 1.3, density: 8.84},
+    {symbol: 'Fm', name: 'Fermio', number: 100, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f¹² 7s²', atomicMass: 257, electronegativity: 1.3, density: null},
+    {symbol: 'Md', name: 'Mendelevio', number: 101, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f¹³ 7s²', atomicMass: 258, electronegativity: 1.3, density: null},
+    {symbol: 'No', name: 'Nobelio', number: 102, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'f', electronConfig: '[Rn] 5f¹⁴ 7s²', atomicMass: 259, electronegativity: 1.3, density: null},
+    {symbol: 'Lr', name: 'Lawrencio', number: 103, category: 'Actínido', state: 'Sólido', group: 3, period: 7, block: 'd', electronConfig: '[Rn] 5f¹⁴ 7s² 7p¹', atomicMass: 266, electronegativity: 1.3, density: null},
+    {symbol: 'Rf', name: 'Rutherfordio', number: 104, category: 'Metal de transición', state: 'Desconocido', group: 4, period: 7, block: 'd', electronConfig: '[Rn] 5f¹⁴ 6d² 7s²', atomicMass: 267, electronegativity: null, density: null},
+    {symbol: 'Db', name: 'Dubnio', number: 105, category: 'Metal de transición', state: 'Desconocido', group: 5, period: 7, block: 'd', electronConfig: '[Rn] 5f¹⁴ 6d³ 7s²', atomicMass: 268, electronegativity: null, density: null},
+    {symbol: 'Sg', name: 'Seaborgio', number: 106, category: 'Metal de transición', state: 'Desconocido', group: 6, period: 7, block: 'd', electronConfig: '[Rn] 5f¹⁴ 6d⁴ 7s²', atomicMass: 269, electronegativity: null, density: null},
+    {symbol: 'Bh', name: 'Bohrio', number: 107, category: 'Metal de transición', state: 'Desconocido', group: 7, period: 7, block: 'd', electronConfig: '[Rn] 5f¹⁴ 6d⁵ 7s²', atomicMass: 270, electronegativity: null, density: null},
+    {symbol: 'Hs', name: 'Hassio', number: 108, category: 'Metal de transición', state: 'Desconocido', group: 8, period: 7, block: 'd', electronConfig: '[Rn] 5f¹⁴ 6d⁶ 7s²', atomicMass: 269, electronegativity: null, density: null},
+    {symbol: 'Mt', name: 'Meitnerio', number: 109, category: 'Metal de transición', state: 'Desconocido', group: 9, period: 7, block: 'd', electronConfig: '[Rn] 5f¹⁴ 6d⁷ 7s²', atomicMass: 278, electronegativity: null, density: null},
+    {symbol: 'Ds', name: 'Darmstadtio', number: 110, category: 'Metal de transición', state: 'Desconocido', group: 10, period: 7, block: 'd', electronConfig: '[Rn] 5f¹⁴ 6d⁸ 7s²', atomicMass: 281, electronegativity: null, density: null},
+    {symbol: 'Rg', name: 'Roentgenio', number: 111, category: 'Metal de transición', state: 'Desconocido', group: 11, period: 7, block: 'd', electronConfig: '[Rn] 5f¹⁴ 6d⁹ 7s²', atomicMass: 282, electronegativity: null, density: null},
+    {symbol: 'Cn', name: 'Copernicio', number: 112, category: 'Metal de transición', state: 'Desconocido', group: 12, period: 7, block: 'd', electronConfig: '[Rn] 5f¹⁴ 6d¹⁰ 7s²', atomicMass: 285, electronegativity: null, density: null},
+    {symbol: 'Nh', name: 'Nihonio', number: 113, category: 'Metal del bloque p', state: 'Desconocido', group: 13, period: 7, block: 'p', electronConfig: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹', atomicMass: 286, electronegativity: null, density: null},
+    {symbol: 'Fl', name: 'Flerovio', number: 114, category: 'Metal del bloque p', state: 'Desconocido', group: 14, period: 7, block: 'p', electronConfig: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p²', atomicMass: 289, electronegativity: null, density: null},
+    {symbol: 'Mc', name: 'Moscovio', number: 115, category: 'Metal del bloque p', state: 'Desconocido', group: 15, period: 7, block: 'p', electronConfig: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³', atomicMass: 290, electronegativity: null, density: null},
+    {symbol: 'Lv', name: 'Livermorio', number: 116, category: 'Metal del bloque p', state: 'Desconocido', group: 16, period: 7, block: 'p', electronConfig: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴', atomicMass: 293, electronegativity: null, density: null},
+    {symbol: 'Ts', name: 'Teneso', number: 117, category: 'Halógeno', state: 'Desconocido', group: 17, period: 7, block: 'p', electronConfig: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵', atomicMass: 294, electronegativity: null, density: null},
+    {symbol: 'Og', name: 'Oganesón', number: 118, category: 'Gas noble', state: 'Desconocido', group: 18, period: 7, block: 'p', electronConfig: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶', atomicMass: 294, electronegativity: null, density: null}
+];
+
+const categories = [
+    {name: 'No metal', color: '#A1D344'},
+    {name: 'Gas noble', color: '#40E0D0'},
+    {name: 'Metal alcalino', color: '#FF6666'},
+    {name: 'Metal alcalinotérreo', color: '#FFDAB9'},
+    {name: 'Metaloide', color: '#CCB974'},
+    {name: 'Halógeno', color: '#FFFF99'},
+    {name: 'Metal de transición', color: '#FFC0CB'},
+    {name: 'Metal del bloque p', color: '#BFC0C0'},
+    {name: 'Lantánido', color: '#FFBFFF'},
+    {name: 'Actínido', color: '#F660AB'}
+];
+
+function createPeriodicTable() {
+    const table = document.getElementById('periodicTable');
+    table.innerHTML = '';
+    elements.forEach(element => {
+        const el = document.createElement('div');
+        el.className = 'element';
+        el.style.backgroundColor = categories.find(cat => cat.name === element.category)?.color || '#FFFFFF';
+        el.innerHTML = `
+            <span class="number">${element.number}</span>
+            <span class="symbol">${element.symbol}</span>
+            <span class="name">${element.name}</span>
+        `;
+        el.style.gridColumn = element.group;
+        el.style.gridRow = element.period;
+        el.addEventListener('click', () => showElementDetails(element));
+        table.appendChild(el);
+    });
+
+    // Añadir filas para lantánidos y actínidos
+    const lanthanides = document.createElement('div');
+    lanthanides.className = 'lanthanides';
+    lanthanides.setAttribute('data-label', 'Lantánidos');
+    const actinides = document.createElement('div');
+    actinides.className = 'actinides';
+    actinides.setAttribute('data-label', 'Actínidos');
+
+    elements.forEach(element => {
+        if (element.category === 'Lantánido') {
+            const el = document.createElement('div');
+            el.className = 'element';
+            el.style.backgroundColor = categories.find(cat => cat.name === element.category)?.color || '#FFFFFF';
+            el.innerHTML = `
+                <span class="number">${element.number}</span>
+                <span class="symbol">${element.symbol}</span>
+                <span class="name">${element.name}</span>
+            `;
+            el.addEventListener('click', () => showElementDetails(element));
+            lanthanides.appendChild(el);
+        } else if (element.category === 'Actínido') {
+            const el = document.createElement('div');
+            el.className = 'element';
+            el.style.backgroundColor = categories.find(cat => cat.name === element.category)?.color || '#FFFFFF';
+            el.innerHTML = `
+                <span class="number">${element.number}</span>
+                <span class="symbol">${element.symbol}</span>
+                <span class="name">${element.name}</span>
+            `;
+            el.addEventListener('click', () => showElementDetails(element));
+            actinides.appendChild(el);
+        }
+    });
+
+    table.appendChild(lanthanides);
+    table.appendChild(actinides);
+}
+
+function createLegend() {
+    const legend = document.getElementById('legend');
+    legend.innerHTML = '';
+    categories.forEach(category => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+            <div class="legend-color" style="background-color: ${category.color};"></div>
+            <span>${category.name}</span>
+        `;
+        legend.appendChild(item);
+    });
+}
+
+function showElementDetails(element) {
+    const modal = document.getElementById('elementModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalInfo = document.getElementById('modalInfo');
+
+    modalTitle.textContent = `${element.name} (${element.symbol})`;
+    modalInfo.innerHTML = `
+        <p><strong>Número atómico:</strong> ${element.number}</p>
+        <p><strong>Categoría:</strong> ${element.category}</p>
+        <p><strong>Estado:</strong> ${element.state}</p>
+        <p><strong>Grupo:</strong> ${element.group}</p>
+        <p><strong>Periodo:</strong> ${element.period}</p>
+        <p><strong>Bloque:</strong> ${element.block}</p>
+        <p><strong>Configuración electrónica:</strong> ${element.electronConfig}</p>
+        <p><strong>Masa atómica:</strong> ${element.atomicMass} u</p>
+        <p><strong>Electronegatividad:</strong> ${element.electronegativity || 'N/A'}</p>
+        <p><strong>Densidad:</strong> ${element.density ? element.density + ' g/cm³' : 'N/A'}</p>
+    `;
+
+    modal.style.display = 'block';
+}
+
+document.querySelector('.close').onclick = function() {
+    document.getElementById('elementModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('elementModal');
+    if (event.target == modal) {
+        modal.style.display = 'none';
+    }
+}
+
+createPeriodicTable();
+createLegend();
+</script>
+</body>
+</html>

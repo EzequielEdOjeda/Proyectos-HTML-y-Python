@@ -1,0 +1,643 @@
+<html><head><base href="https://"><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Mercado Pelí</title><script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script><script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script><style>
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  background-color: #EBEBEB;
+  color: #333333;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header {
+  background-color: #202124;
+  padding: 20px 0;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #E50914;
+  margin-left: 20px;
+  text-decoration: none;
+}
+
+.search-bar {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.search-bar input {
+  width: 70%;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,.2);
+}
+
+.movies {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.movie {
+  background-color: #FFFFFF;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+  box-shadow: 0 1px 2px 0 rgba(0,0,0,.2);
+  cursor: pointer;
+}
+
+.movie:hover {
+  box-shadow: 0 7px 16px 0 rgba(0,0,0,.2), 0 1px 3px 0 rgba(0,0,0,.1);
+}
+
+.movie img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+}
+
+.movie-info {
+  padding: 15px;
+}
+
+.movie h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.movie .price {
+  font-size: 24px;
+  font-weight: 400;
+  color: #333333;
+}
+
+.movie button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background-color: #E50914;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.movie button:hover {
+  background-color: #B20710;
+}
+
+.cart {
+  position: fixed;
+  top: 0;
+  right: -300px;
+  width: 300px;
+  height: 100%;
+  background-color: #FFFFFF;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+  transition: right 0.3s ease-in-out;
+  z-index: 1000;
+}
+
+.cart.open {
+  right: 0;
+}
+
+.cart-header {
+  background-color: #202124;
+  color: #E50914;
+  padding: 15px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.cart-items {
+  padding: 15px;
+  max-height: calc(100% - 200px);
+  overflow-y: auto;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #EBEBEB;
+}
+
+.cart-item-info {
+  flex-grow: 1;
+}
+
+.cart-item-title {
+  font-weight: bold;
+}
+
+.cart-item-price {
+  color: #333333;
+}
+
+.cart-item-remove {
+  background-color: #E50914;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cart-total {
+  position: absolute;
+  bottom: 70px;
+  left: 0;
+  right: 0;
+  padding: 15px;
+  background-color: #FFFFFF;
+  font-size: 18px;
+  font-weight: bold;
+  border-top: 1px solid #EBEBEB;
+}
+
+.cart-checkout {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 15px;
+}
+
+.cart-checkout button {
+  width: 100%;
+  padding: 10px;
+  background-color: #E50914;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.cart-checkout button:hover {
+  background-color: #B20710;
+}
+
+.cart-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #40E0D0;
+  border: none;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  z-index: 1001;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.cart-toggle svg {
+  width: 30px;
+  height: 30px;
+  fill: white;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background-color: #FFFFFF;
+  padding: 30px;
+  border-radius: 6px;
+  width: 90%;
+  max-width: 600px;
+  position: relative;
+}
+
+.modal h2 {
+  margin-top: 0;
+  color: #333333;
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333333;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.payment-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.payment-option {
+  flex: 1 0 calc(50% - 10px);
+  padding: 15px;
+  border: 1px solid #EBEBEB;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+  text-align: center;
+}
+
+.payment-option:hover {
+  border-color: #E50914;
+}
+
+.payment-option.selected {
+  border-color: #E50914;
+  background-color: #F5F5F5;
+}
+
+.modal button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 20px;
+  background-color: #E50914;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.modal button:hover {
+  background-color: #B20710;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.tab {
+  padding: 10px 20px;
+  margin: 0 5px;
+  background-color: #FFFFFF;
+  color: #333333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.tab.active {
+  background-color: #E50914;
+  color: #FFFFFF;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+.movie-details-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.movie-details-content {
+  background-color: #FFFFFF;
+  padding: 30px;
+  border-radius: 6px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.movie-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.movie-details-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333333;
+  margin: 0;
+}
+
+.movie-details-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #333333;
+}
+
+.movie-details-info {
+  display: flex;
+  gap: 20px;
+}
+
+.movie-details-poster {
+  flex: 0 0 200px;
+}
+
+.movie-details-poster img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+.movie-details-text {
+  flex: 1;
+}
+
+.movie-details-overview {
+  margin-bottom: 20px;
+}
+
+.movie-details-meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+}
+
+.movie-details-label {
+  font-weight: bold;
+}
+
+</style></head><body>
+<div id="app">
+  <header>
+    <div class="container">
+      <a href="#" class="logo">Mercado Pelí</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="search-bar">
+      <input type="text" v-model="searchQuery" @input="searchMovies" placeholder="Buscar películas o series...">
+    </div>
+
+    <div class="tabs">
+      <button @click="setType('movie')" :class="{ tab: true, active: currentType === 'movie' }">Películas</button>
+      <button @click="setType('tv')" :class="{ tab: true, active: currentType === 'tv' }">Series</button>
+    </div>
+
+    <div class="movies">
+      <div v-for="item in items" :key="item.id" class="movie fade-in" @click="showMovieDetails(item)">
+        <img :src="getImageUrl(item.poster_path)" :alt="item.title || item.name">
+        <div class="movie-info">
+          <h3>{{ item.title || item.name }}</h3>
+          <p class="price">${{ item.price.toFixed(2) }}</p>
+          <button @click.stop="addToCart(item)">Agregar al carrito</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="cart-toggle" @click="toggleCart">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/>
+    </svg>
+  </button>
+
+  <div class="cart" :class="{ open: isCartOpen }">
+    <div class="cart-header">
+      Carrito de Compras
+    </div>
+    <div class="cart-items">
+      <div v-for="item in cart" :key="item.id" class="cart-item">
+        <div class="cart-item-info">
+          <div class="cart-item-title">{{ item.title || item.name }}</div>
+          <div class="cart-item-price">${{ item.price.toFixed(2) }}</div>
+        </div>
+        <button class="cart-item-remove" @click="removeFromCart(item)">X</button>
+      </div>
+    </div>
+    <div class="cart-total">
+      Total: ${{ cartTotal.toFixed(2) }}
+    </div>
+    <div class="cart-checkout">
+      <button @click="openCheckoutModal">Proceder al pago</button>
+    </div>
+  </div>
+
+  <div class="modal" v-if="isCheckoutModalOpen">
+    <div class="modal-content">
+      <button class="modal-close" style="width: 6%;" @click="closeCheckoutModal">&times;</button>
+      <h2>Elige tu método de pago</h2>
+      <div class="payment-options">
+        <div class="payment-option" :class="{ selected: selectedPayment === 'credit' }" @click="selectedPayment = 'credit'">
+          <h3>Tarjeta de Crédito/Débito</h3>
+          <p>Visa, Mastercard, American Express</p>
+        </div>
+        <div class="payment-option" :class="{ selected: selectedPayment === 'paypal' }" @click="selectedPayment = 'paypal'">
+          <h3>PayPal</h3>
+          <p>Paga con tu cuenta PayPal</p>
+        </div>
+      </div>
+      <button @click="processPayment">Continuar con el pago</button>
+    </div>
+  </div>
+
+  <div class="movie-details-modal" v-if="selectedMovie" @click.self="closeMovieDetails">
+    <div class="movie-details-content">
+      <div class="movie-details-header">
+        <h2 class="movie-details-title">{{ selectedMovie.title || selectedMovie.name }}</h2>
+        <button class="movie-details-close" @click="closeMovieDetails">&times;</button>
+      </div>
+      <div class="movie-details-info">
+        <div class="movie-details-poster">
+          <img :src="getImageUrl(selectedMovie.poster_path)" :alt="selectedMovie.title || selectedMovie.name">
+        </div>
+        <div class="movie-details-text">
+          <div class="movie-details-overview">
+            <h3>Sinopsis</h3>
+            <p>{{ selectedMovie.overview }}</p>
+          </div>
+          <div class="movie-details-meta">
+            <span class="movie-details-label">Fecha de lanzamiento:</span>
+            <span>{{ selectedMovie.release_date || selectedMovie.first_air_date }}</span>
+            <span class="movie-details-label">Calificación:</span>
+            <span>{{ selectedMovie.vote_average }} / 10</span>
+            <span class="movie-details-label">Popularidad:</span>
+            <span>{{ selectedMovie.popularity }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+new Vue({
+  el: '#app',
+  data: {
+    searchQuery: '',
+    items: [],
+    cart: [],
+    isCartOpen: false,
+    isCheckoutModalOpen: false,
+    selectedPayment: '',
+    currentType: 'movie',
+    API_KEY: '4ea270f32fe4e8fcdfd68b4cd5a7074f',
+    BASE_URL: 'https://api.themoviedb.org/3',
+    IMG_BASE_URL: 'https://image.tmdb.org/t/p/w500',
+    selectedMovie: null,
+  },
+  computed: {
+    cartTotal() {
+      return this.cart.reduce((total, item) => total + item.price, 0);
+    },
+  },
+  methods: {
+    async fetchItems() {
+      try {
+        const response = await axios.get(`${this.BASE_URL}/${this.currentType}/popular`, {
+          params: {
+            api_key: this.API_KEY,
+            language: 'es-ES',
+          }
+        });
+        this.items = response.data.results.map(item => ({
+          ...item,
+          price: this.generateRandomPrice()
+        }));
+      } catch (error) {
+        console.error('Error fetching items:', error);
+      }
+    },
+    generateRandomPrice() {
+      return Math.floor(Math.random() * (50 - 10 + 1) + 10);
+    },
+    async searchMovies() {
+      if (this.searchQuery) {
+        try {
+          const response = await axios.get(`${this.BASE_URL}/search/${this.currentType}`, {
+            params: {
+              api_key: this.API_KEY,
+              language: 'es-ES',
+              query: this.searchQuery,
+            }
+          });
+          this.items = response.data.results.map(item => ({
+            ...item,
+            price: this.generateRandomPrice()
+          }));
+        } catch (error) {
+          console.error('Error searching items:', error);
+        }
+      } else {
+        this.fetchItems();
+      }
+    },
+    getImageUrl(path) {
+      return path ? `${this.IMG_BASE_URL}${path}` : 'https://via.placeholder.com/500x750?text=No+Image';
+    },
+    addToCart(item) {
+      this.cart.push(item);
+      this.isCartOpen = true;
+    },
+    removeFromCart(item) {
+      const index = this.cart.indexOf(item);
+      if (index > -1) {
+        this.cart.splice(index, 1);
+      }
+    },
+    toggleCart() {
+      this.isCartOpen = !this.isCartOpen;
+    },
+    openCheckoutModal() {
+      this.isCheckoutModalOpen = true;
+      this.selectedPayment = '';
+    },
+    closeCheckoutModal() {
+      this.isCheckoutModalOpen = false;
+      this.selectedPayment = '';
+    },
+    processPayment() {
+      if (!this.selectedPayment) {
+        alert('Por favor, selecciona un método de pago.');
+        return;
+      }
+      
+      let paymentUrl = '';
+      if (this.selectedPayment === 'credit') {
+        paymentUrl = 'https://www.visa.com.ar/pague-con-visa/tarjetas-visa.html';
+      } else if (this.selectedPayment === 'paypal') {
+        paymentUrl = 'https://www.paypal.com/ar/webapps/mpp/home';
+      }
+      
+      if (paymentUrl) {
+        window.open(paymentUrl, '_blank');
+      }
+      
+      this.cart = [];
+      this.isCheckoutModalOpen = false;
+      this.isCartOpen = false;
+      this.selectedPayment = '';
+    },
+    setType(type) {
+      this.currentType = type;
+      this.fetchItems();
+    },
+    showMovieDetails(movie) {
+      this.selectedMovie = movie;
+    },
+    closeMovieDetails() {
+      this.selectedMovie = null;
+    },
+  },
+  mounted() {
+    this.fetchItems();
+  },
+});
+</script>
+</body></html>

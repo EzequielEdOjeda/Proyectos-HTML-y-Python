@@ -1,0 +1,345 @@
+<html><head><base href="https://websim-creation-engine.example.com/interactive-population-globe-with-framed-flags/%20voglio%20che%20mi%20fai%20ascoltare%20con%20l'audio%20la%20radio%20mondiale%20di%20ogni%20citta,%20cambia%20in%20random%20ogni%203%20minuti%20e%20nel%20globbo%20con%20un%20onda%20rossa%20dinamica%20segnali%20che%20sta%20trasmetendo%20in%20quello%20stato%20e%20segue%20lo%20stato,%20sotto%20scrivi%20il%20nome%20della%20radio,%20la%20frequenza%20e%20il%20nome%20della%20citt%C3%A0.%20%20Il%20globbo%20deve%20girare,%20deve%20impiegare%203%20minuti%20per%20completare%20il%20giro%20In%20alto%20a%20dx%20metti%20delle%20curiosita%20del%20mondo%20della%20radio,%20in%20alto%20a%20sx%20metti%20un%20conto%20alla%20rovestia%20al%20cambio%20della%20stazione.%20Devi%20fare%20un%20controllo,%20quando%20ti%20connetti%20in%20una%20radio%20che%20sta%20trasmettendo%20ma%20non%20si%20sente%20nulla%20per%20pi%C3%B9%20di%206%20secondi,%20passa%20a%20un'altra%20stazione.%20I%20colori%20degli%20stati%20devono%20essere%20statici,%20se%20viene%20trasmezzo%20lo%20stesso%20audio%20in%20loop%20per%20pi%C3%B9%20di%2015%20secondi,%20cambia%20stazione.%20Rendi%20la%20pagina%20accattivante%20e%20di%20grande%20impatto.%20Non%20collegarti%20mai%20su%20stazioni%20di%20Berlino.%20Con%20un%20bel%20titolo%20%22WORLD%20RADIO%22.%20Sul%20lato%20dx%20metti%20i%20fusorario%20delle%20maggior%20citt%C3%A0%20mondiali%20e%20sul%20lato%20dx%20metti%20le%20temperature%20delle%20maggiorni%20citta%20mondiali">
+<title>WORLD RADIO</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://d3js.org/topojson.v3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+    
+    body {
+        margin: 0;
+        padding: 0;
+        background-color: #000;
+        color: #fff;
+        font-family: 'Orbitron', sans-serif;
+        overflow: hidden;
+    }
+    #title {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 48px;
+        text-align: center;
+        text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+        z-index: 1000;
+    }
+    #globe {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    #info-panel {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 18px;
+        width: 80%;
+        max-width: 600px;
+        box-shadow: 0 0 20px #00ffff;
+    }
+    #radio-wave {
+        position: absolute;
+        pointer-events: none;
+        transition: left 0.5s ease-out, top 0.5s ease-out;
+    }
+    #radio-fact {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 10px;
+        border-radius: 5px;
+        max-width: 300px;
+        font-style: italic;
+        box-shadow: 0 0 10px #ff00ff;
+    }
+    #next-station {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 24px;
+        font-weight: bold;
+        box-shadow: 0 0 10px #ffff00;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    #next-station:hover {
+        background-color: rgba(255, 255, 0, 0.3);
+    }
+    #time-zones, #temperatures {
+        position: absolute;
+        top: 100px;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 14px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 0 10px #00ff00;
+    }
+    #time-zones {
+        right: 20px;
+    }
+    #temperatures {
+        left: 20px;
+    }
+    .glow {
+        animation: glow 1s ease-in-out infinite alternate;
+    }
+    @keyframes glow {
+        from {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #00ffff, 0 0 20px #00ffff, 0 0 25px #00ffff, 0 0 30px #00ffff, 0 0 35px #00ffff;
+        }
+        to {
+            text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #00ffff, 0 0 40px #00ffff, 0 0 50px #00ffff, 0 0 60px #00ffff, 0 0 70px #00ffff;
+        }
+    }
+</style>
+</head>
+<body>
+<h1 id="title" class="glow">WORLD RADIO</h1>
+<div id="globe"></div>
+<div id="info-panel">
+    <div id="radio-name"></div>
+    <div id="radio-frequency"></div>
+    <div id="radio-city"></div>
+</div>
+<svg id="radio-wave" width="200" height="200">
+    <circle cx="100" cy="100" r="0" fill="none" stroke="#ff00ff" stroke-width="2">
+        <animate attributeName="r" from="0" to="100" dur="3s" repeatCount="indefinite" />
+        <animate attributeName="opacity" from="1" to="0" dur="3s" repeatCount="indefinite" />
+    </circle>
+</svg>
+<div id="radio-fact"></div>
+<div id="next-station">Next Station</div>
+<div id="time-zones"></div>
+<div id="temperatures"></div>
+<audio id="radio-player" autoplay></audio>
+<script>
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const projection = d3.geoOrthographic()
+        .scale(Math.min(width, height) / 2.5)
+        .center([0, 0])
+        .translate([width / 2, height / 2]);
+
+    const canvas = d3.select('#globe')
+        .append('canvas')
+        .attr('width', width)
+        .attr('height', height);
+
+    const context = canvas.node().getContext('2d');
+
+    const path = d3.geoPath()
+        .projection(projection)
+        .context(context);
+
+    const radioName = d3.select('#radio-name');
+    const radioFrequency = d3.select('#radio-frequency');
+    const radioCity = d3.select('#radio-city');
+    const radioWave = d3.select('#radio-wave');
+    const radioPlayer = d3.select('#radio-player').node();
+    const radioFactDisplay = d3.select('#radio-fact');
+    const nextStationButton = d3.select('#next-station');
+    const timeZonesDisplay = d3.select('#time-zones');
+    const temperaturesDisplay = d3.select('#temperatures');
+
+    let countries;
+    let currentCountry = null;
+
+    // Radio stations data (excluding Berlin and including the new station)
+    const radioStations = [
+        { name: "WNYC", frequency: "93.9 FM", city: "New York", country: "United States", stream: "https://fm939.wnyc.org/wnycfm-web" },
+        { name: "BBC World Service", frequency: "92-95 FM", city: "London", country: "United Kingdom", stream: "https://stream.live.vc.bbcmedia.co.uk/bbc_world_service" },
+        { name: "France Inter", frequency: "87.8 FM", city: "Paris", country: "France", stream: "https://icecast.radiofrance.fr/franceinter-midfi.mp3" },
+        { name: "ABC Radio National", frequency: "576 AM", city: "Sydney", country: "Australia", stream: "https://live-radio01.mediahubaustralia.com/2RNW/mp3/" },
+        { name: "All India Radio", frequency: "153 AM", city: "New Delhi", country: "India", stream: "http://air.pc.cdn.bitgravity.com/air/live/pbaudio001/playlist.m3u8" },
+        { name: "NHK World Radio Japan", frequency: "6195 kHz", city: "Tokyo", country: "Japan", stream: "https://nhkworld.webcdn.stream.ne.jp/www11/nhkworld-tv/global/263941/live_wa_s.m3u8" },
+        { name: "RAI Radio 1", frequency: "89.3 FM", city: "Rome", country: "Italy", stream: "https://icestreaming.rai.it/1.mp3" },
+        { name: "Radio Canada International", frequency: "1355 AM", city: "Ottawa", country: "Canada", stream: "https://rcavliveaudio.akamaized.net/hls/live/2006635/Radio-Canada_Premiere/master.m3u8" },
+        { name: "RFI Monde", frequency: "15300 kHz", city: "Paris", country: "France", stream: "https://rfimonde64k.ice.infomaniak.ch/rfimonde-64.mp3" },
+        { name: "La Radio 104.7", frequency: "104.7 FM", city: "Chaco", country: "Argentina", stream: "https://server.laradio.online/proxy/laradio1047?mp=/stream" }
+    ];
+
+    // Radio facts
+    const radioFacts = [
+        "The first radio news program was broadcast on August 31, 1920 by station 8MK in Detroit, Michigan.",
+        "The word 'radio' comes from the Latin 'radius', meaning 'spoke of a wheel, beam of light, ray'.",
+        "The first radio advertisement was broadcast in 1922 in New York City.",
+        "The BBC World Service reaches over 279 million people worldwide every week.",
+        "The longest running radio show is 'Grand Ole Opry', which began in 1925 and still airs today.",
+        "Radio waves travel at the speed of light, about 186,000 miles per second.",
+        "The first transatlantic radio signal was sent by Guglielmo Marconi in 1901.",
+        "There are over 44,000 radio stations worldwide.",
+        "The term 'soap opera' comes from radio dramas being sponsored by soap manufacturers.",
+        "The first car radio was introduced in 1930 by Motorola."
+    ];
+
+    // Major world cities for time zones and temperatures
+    const majorCities = [
+        { name: "New York", timeZone: "America/New_York" },
+        { name: "London", timeZone: "Europe/London" },
+        { name: "Paris", timeZone: "Europe/Paris" },
+        { name: "Tokyo", timeZone: "Asia/Tokyo" },
+        { name: "Sydney", timeZone: "Australia/Sydney" },
+        { name: "Dubai", timeZone: "Asia/Dubai" },
+        { name: "Moscow", timeZone: "Europe/Moscow" },
+        { name: "Los Angeles", timeZone: "America/Los_Angeles" },
+        { name: "Singapore", timeZone: "Asia/Singapore" },
+        { name: "Rio de Janeiro", timeZone: "America/Sao_Paulo" }
+    ];
+
+    const colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+    function render() {
+        context.clearRect(0, 0, width, height);
+
+        context.beginPath();
+        path({type: 'Sphere'});
+        context.fillStyle = '#000033';
+        context.fill();
+
+        countries.features.forEach(feature => {
+            context.beginPath();
+            path(feature);
+            context.fillStyle = feature === currentCountry ? '#ff00ff' : colorScale(feature.id);
+            context.fill();
+            context.strokeStyle = '#ffffff';
+            context.lineWidth = 0.5;
+            context.stroke();
+        });
+
+        // Add stars
+        for (let i = 0; i < 200; i++) {
+            const x = Math.random() * width;
+            const y = Math.random() * height;
+            const r = Math.random() * 1.5;
+            context.beginPath();
+            context.arc(x, y, r, 0, 2 * Math.PI);
+            context.fillStyle = 'white';
+            context.fill();
+        }
+    }
+
+    let audioCheckTimeout;
+    let loopCheckInterval;
+
+    function changeRadioStation() {
+        clearTimeout(audioCheckTimeout);
+        clearInterval(loopCheckInterval);
+
+        const station = radioStations[Math.floor(Math.random() * radioStations.length)];
+        currentCountry = countries.features.find(f => f.properties.name === station.country);
+        
+        radioName.text(station.name).attr('class', 'glow');
+        radioFrequency.text(station.frequency);
+        radioCity.text(`${station.city}, ${station.country}`);
+        
+        // Update radio wave position
+        const [x, y] = projection(d3.geoCentroid(currentCountry));
+        radioWave.style('left', `${x - 100}px`).style('top', `${y - 100}px`);
+        
+        // Change radio stream
+        radioPlayer.src = station.stream;
+        radioPlayer.play().catch(e => console.log("Audio play failed:", e));
+
+        render();
+
+        // Display a random radio fact
+        radioFactDisplay.text(radioFacts[Math.floor(Math.random() * radioFacts.length)]);
+
+        // Check for audio after 6 seconds
+        audioCheckTimeout = setTimeout(() => {
+            if (radioPlayer.paused || radioPlayer.currentTime === 0) {
+                console.log("No audio detected after 6 seconds, changing station...");
+                changeRadioStation();
+            }
+        }, 6000);
+
+        // Check for audio loop
+        let lastTime = 0;
+        let loopCount = 0;
+        loopCheckInterval = setInterval(() => {
+            if (Math.abs(radioPlayer.currentTime - lastTime) < 0.1) {
+                loopCount++;
+                if (loopCount > 15) {
+                    console.log("Audio loop detected, changing station...");
+                    changeRadioStation();
+                }
+            } else {
+                loopCount = 0;
+            }
+            lastTime = radioPlayer.currentTime;
+        }, 1000);
+    }
+
+    function updateTimeZones() {
+        timeZonesDisplay.html(
+            majorCities.map(city => 
+                `<div>${city.name}: ${moment().tz(city.timeZone).format('HH:mm')}</div>`
+            ).join('')
+        );
+    }
+
+    function updateTemperatures() {
+        // Simulated temperatures for demonstration
+        temperaturesDisplay.html(
+            majorCities.map(city => 
+                `<div>${city.name}: ${Math.floor(Math.random() * 30 + 10)}°C</div>`
+            ).join('')
+        );
+    }
+
+    d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+        .then(data => {
+            countries = topojson.feature(data, data.objects.countries);
+            render();
+            changeRadioStation();
+            
+            // Start globe rotation
+            let rotation = 0;
+            d3.timer((elapsed) => {
+                rotation = (elapsed / 180000) * 360; // Full rotation in 3 minutes
+                projection.rotate([rotation, -30]);
+                render();
+
+                // Update radio wave position
+                if (currentCountry) {
+                    const [x, y] = projection(d3.geoCentroid(currentCountry));
+                    radioWave.style('left', `${x - 100}px`).style('top', `${y - 100}px`);
+                }
+            });
+
+            // Update time zones and temperatures every minute
+            updateTimeZones();
+            updateTemperatures();
+            setInterval(() => {
+                updateTimeZones();
+                updateTemperatures();
+            }, 60000);
+        });
+
+    // Audio error handling
+    radioPlayer.onerror = () => {
+        console.log("Audio error, changing station...");
+        changeRadioStation();
+    };
+
+    // Next Station button functionality
+    nextStationButton.on('click', changeRadioStation);
+</script>
+</body>
+</html>

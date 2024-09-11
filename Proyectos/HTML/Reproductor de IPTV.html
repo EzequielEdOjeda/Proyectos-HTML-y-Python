@@ -1,0 +1,411 @@
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reproductor IPTV</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+  :root {
+    --primary-color: #e74c3c;
+    --secondary-color: #3498db;
+    --background-color: #ffffff;
+    --surface-color: #f5f5f5;
+    --text-color: #333333;
+  }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .upload-section {
+    text-align: center;
+    padding: 20px;
+    border: 2px dashed var(--secondary-color);
+    border-radius: 15px;
+    margin-bottom: 20px;
+    background-color: var(--surface-color);
+    transition: all 0.3s ease;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .upload-section:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 15px rgba(52, 152, 219, 0.2);
+  }
+
+  .upload-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+    color: var(--secondary-color);
+  }
+
+  .upload-btn {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+    display: inline-block;
+  }
+
+  .upload-btn:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+  }
+
+  .upload-text {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #7f8c8d;
+  }
+
+  #fileUpload {
+    display: none;
+  }
+
+  .player-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+  }
+
+  .channel-list-container {
+    flex: 0 0 230px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .search-container {
+    margin-bottom: 10px;
+  }
+
+  #searchInput {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+
+  .channel-list {
+    background-color: var(--surface-color);
+    padding: 10px;
+    border-radius: 8px;
+    overflow-y: auto;
+    max-height: 400px;
+    flex-grow: 1;
+  }
+
+  .channel-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-radius: 4px;
+  }
+
+  .channel-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .channel-icon {
+    width: 30px;
+    height: 30px;
+    margin-right: 8px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .channel-name {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .player-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 300px;
+  }
+
+  #currentChannelName {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  #player {
+    width: 100%;
+    max-width: 720px;
+    aspect-ratio: 16 / 9;
+    background-color: #000;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .player-controls {
+    width: 100%;
+    max-width: 720px;
+    background-color: white;
+    padding: 10px 0;
+    text-align: center;
+    border-radius: 0 0 8px 8px;
+    margin-top: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .control-btn {
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+    font-size: 14px;
+    margin: 0 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 8px 16px;
+    border-radius: 20px;
+  }
+
+  .control-btn:hover {
+    background-color: #c0392b;
+    transform: scale(1.05);
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      width: 95%;
+      padding: 10px;
+    }
+    .player-section {
+      flex-direction: column;
+    }
+    .channel-list-container {
+      flex: 1;
+    }
+    .channel-list {
+      max-height: 200px;
+    }
+    #player {
+      max-width: 100%;
+    }
+    .player-controls {
+      max-width: 100%;
+    }
+  }
+
+  .loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 20px;
+    color: white;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="upload-section">
+    <div class="upload-icon">📺</div>
+    <label for="fileUpload" class="upload-btn">Abrir listas M3U locales</label>
+    <input type="file" id="fileUpload" accept=".m3u,.m3u8" multiple>
+    <p class="upload-text">O arrastra y suelta aquí tus listas M3U</p>
+  </div>
+
+  <div class="player-section" style="display: none;">
+    <div class="channel-list-container">
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Buscar canal...">
+      </div>
+      <div class="channel-list" id="channelList"></div>
+    </div>
+    <div class="player-wrapper">
+      <div id="currentChannelName"></div>
+      <video id="player" controls></video>
+      <div class="player-controls">
+        <button class="control-btn" id="prevBtn">⏮️ Anterior</button>
+        <button class="control-btn" id="nextBtn">⏭️ Siguiente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const fileUpload = document.getElementById('fileUpload');
+  const channelList = document.getElementById('channelList');
+  const player = document.getElementById('player');
+  const playerSection = document.querySelector('.player-section');
+  const uploadSection = document.querySelector('.upload-section');
+  const currentChannelNameElement = document.getElementById('currentChannelName');
+  const searchInput = document.getElementById('searchInput');
+
+  let channels = [];
+  let currentChannelIndex = -1;
+
+  fileUpload.addEventListener('change', handleFileUpload);
+  uploadSection.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadSection.style.borderColor = '#3498db';
+  });
+  uploadSection.addEventListener('dragleave', () => {
+    uploadSection.style.borderColor = '#3498db';
+  });
+  uploadSection.addEventListener('drop', handleFileDrop);
+
+  searchInput.addEventListener('input', filterChannels);
+
+  function handleFileUpload(e) {
+    const files = e.target.files;
+    processFiles(files);
+  }
+
+  function handleFileDrop(e) {
+    e.preventDefault();
+    uploadSection.style.borderColor = '#3498db';
+    const files = e.dataTransfer.files;
+    processFiles(files);
+  }
+
+  function processFiles(files) {
+    Array.from(files).forEach(file => {
+      if (file.name.endsWith('.m3u') || file.name.endsWith('.m3u8')) {
+        const reader = new FileReader();
+        reader.onload = (e) => parseM3U(e.target.result);
+        reader.readAsText(file);
+      }
+    });
+  }
+
+  function parseM3U(content) {
+    channels = [];
+    const lines = content.split('\n');
+    let currentChannel = {};
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line.startsWith('#EXTINF:')) {
+        const parts = line.split(',');
+        currentChannel.name = parts[parts.length - 1].trim();
+        const tvgLogoMatch = line.match(/tvg-logo="([^"]+)"/);
+        currentChannel.logo = tvgLogoMatch ? tvgLogoMatch[1] : 'https://via.placeholder.com/30';
+      } else if (line.startsWith('http')) {
+        currentChannel.url = line;
+        channels.push(currentChannel);
+        currentChannel = {};
+      }
+    }
+
+    renderChannelList();
+    showPlayerSection();
+    if (channels.length > 0) {
+      playChannel(0);
+    }
+  }
+
+  function renderChannelList(filteredChannels = channels) {
+    channelList.innerHTML = '';
+    const fragment = document.createDocumentFragment();
+    filteredChannels.forEach((channel, index) => {
+      const item = document.createElement('div');
+      item.className = 'channel-item';
+      item.innerHTML = `
+        <img class="channel-icon" src="${channel.logo}" alt="${channel.name}" onerror="this.src='https://via.placeholder.com/30'">
+        <span class="channel-name">${channel.name}</span>
+      `;
+      item.addEventListener('click', () => {
+        playChannel(channels.indexOf(channel));
+        searchInput.value = '';
+        renderChannelList();
+      });
+      fragment.appendChild(item);
+    });
+    channelList.appendChild(fragment);
+  }
+
+  function filterChannels() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const filteredChannels = channels.filter(channel => 
+      channel.name.toLowerCase().includes(searchTerm)
+    );
+    renderChannelList(filteredChannels);
+  }
+
+  function showPlayerSection() {
+    uploadSection.style.display = 'none';
+    playerSection.style.display = 'flex';
+  }
+
+  function playChannel(index) {
+    currentChannelIndex = index;
+    const channel = channels[index];
+    currentChannelNameElement.textContent = channel.name;
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+      });
+      hls.loadSource(channel.url);
+      hls.attachMedia(player);
+      hls.on(Hls.Events.MANIFEST_PARSED, function() {
+        player.play().catch(e => console.error('Error al reproducir:', e));
+      });
+    } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+      player.src = channel.url;
+      player.addEventListener('loadedmetadata', function() {
+        player.play().catch(e => console.error('Error al reproducir:', e));
+      });
+    }
+  }
+
+  document.getElementById('prevBtn').addEventListener('click', playPreviousChannel);
+  document.getElementById('nextBtn').addEventListener('click', playNextChannel);
+
+  function playPreviousChannel() {
+    if (currentChannelIndex > 0) {
+      playChannel(currentChannelIndex - 1);
+    }
+  }
+
+  function playNextChannel() {
+    if (currentChannelIndex < channels.length - 1) {
+      playChannel(currentChannelIndex + 1);
+    }
+  }
+
+  player.addEventListener('error', function(e) {
+    console.error('Error al reproducir el canal:', e);
+    alert('Error al reproducir el canal. Intentando con el siguiente...');
+    playNextChannel();
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,663 @@
+<html><head><base href="https://tools.org/photoshop">
+<title>Advanced Online Photo Editor</title>
+<style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        height: 100%;
+        overflow: hidden;
+        background-color: #2c2c2c;
+        color: #e0e0e0;
+    }
+    .editor {
+        display: flex;
+        height: 100%;
+    }
+    .toolbar {
+        width: 60px;
+        background-color: #1a1a1a;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .tool {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 10px;
+        background-color: #3a3a3a;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.3s;
+    }
+    .tool:hover, .tool.active {
+        background-color: #4a4a4a;
+    }
+    .tool svg {
+        width: 24px;
+        height: 24px;
+        fill: #e0e0e0;
+    }
+    .workspace {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .menu-bar {
+        height: 30px;
+        background-color: #1a1a1a;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+    }
+    .menu-item {
+        margin-right: 15px;
+        cursor: pointer;
+        position: relative;
+    }
+    .submenu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        background-color: #2c2c2c;
+        border: 1px solid #4a4a4a;
+        z-index: 1000;
+    }
+    .submenu-item {
+        padding: 5px 10px;
+        white-space: nowrap;
+    }
+    .submenu-item:hover {
+        background-color: #4a4a4a;
+    }
+    .canvas-area {
+        flex-grow: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #3a3a3a;
+        position: relative;
+        overflow: hidden;
+    }
+    #canvas {
+        background-color: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    .layers-panel {
+        width: 200px;
+        background-color: #1a1a1a;
+        padding: 10px;
+    }
+    .layer {
+        background-color: #3a3a3a;
+        margin-bottom: 5px;
+        padding: 5px;
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+    }
+    .layer-visibility {
+        margin-right: 5px;
+        cursor: pointer;
+    }
+    .color-picker {
+        width: 30px;
+        height: 30px;
+        border: none;
+        border-radius: 50%;
+        overflow: hidden;
+        cursor: pointer;
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.7);
+    }
+    .modal-content {
+        background-color: #2c2c2c;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #4a4a4a;
+        width: 300px;
+    }
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    .close:hover {
+        color: #fff;
+    }
+</style>
+</head>
+<body>
+    <div class="editor">
+        <div class="toolbar">
+            <button class="tool" title="Move" data-tool="move">
+                <svg viewBox="0 0 24 24"><path d="M10,9A1,1 0 0,1 11,8A1,1 0 0,1 12,9V13.47L13.21,13.6L18.15,15.79C18.68,16.03 19,16.56 19,17.14V21.5C18.97,22.32 18.32,22.97 17.5,23H11C10.62,23 10.26,22.85 10,22.57L5.1,18.37L5.84,17.6C6.03,17.39 6.3,17.28 6.58,17.28H6.8L10,19V9M11,5A4,4 0 0,1 15,9C15,10.5 14.2,11.77 13,12.46V11.24C13.61,10.69 14,9.89 14,9A3,3 0 0,0 11,6A3,3 0 0,0 8,9C8,9.89 8.39,10.69 9,11.24V12.46C7.8,11.77 7,10.5 7,9A4,4 0 0,1 11,5Z"/></svg>
+            </button>
+            <button class="tool" title="Brush" data-tool="brush">
+                <svg viewBox="0 0 24 24"><path d="M20.71,4.63L19.37,3.29C19,2.9 18.35,2.9 17.96,3.29L9,12.25L11.75,15L20.71,6.04C21.1,5.65 21.1,5 20.71,4.63M7,14A3,3 0 0,0 4,17C4,18.31 2.84,19 2,19C2.92,20.22 4.5,21 6,21A4,4 0 0,0 10,17A3,3 0 0,0 7,14Z"/></svg>
+            </button>
+            <button class="tool" title="Eraser" data-tool="eraser">
+                <svg viewBox="0 0 24 24"><path d="M16.24,3.56L21.19,8.5C21.97,9.29 21.97,10.55 21.19,11.34L12,20.53C10.44,22.09 7.91,22.09 6.34,20.53L2.81,17C2.03,16.21 2.03,14.95 2.81,14.16L13.41,3.56C14.2,2.78 15.46,2.78 16.24,3.56M4.22,15.58L7.76,19.11C8.54,19.9 9.8,19.9 10.59,19.11L14.12,15.58L9.17,10.63L4.22,15.58Z"/></svg>
+            </button>
+            <button class="tool" title="Text" data-tool="text">
+                <svg viewBox="0 0 24 24"><path d="M18.5,4L19.66,8.35L18.7,8.61C18.25,7.74 17.79,6.87 17.26,6.43C16.73,6 16.11,6 15.5,6H13V16.5C13,17 13,17.5 13.33,17.75C13.67,18 14.33,18 15,18V19H9V18C9.67,18 10.33,18 10.67,17.75C11,17.5 11,17 11,16.5V6H8.5C7.89,6 7.27,6 6.74,6.43C6.21,6.87 5.75,7.74 5.3,8.61L4.34,8.35L5.5,4H18.5Z"/></svg>
+            </button>
+            <button class="tool" title="Shape" data-tool="shape">
+                <svg viewBox="0 0 24 24"><path d="M11,13.5V21.5H3V13.5H11M12,2L17.5,11H6.5L12,2M17.5,13C20,13 22,15 22,17.5C22,20 20,22 17.5,22C15,22 13,20 13,17.5C13,15 15,13 17.5,13Z"/></svg>
+            </button>
+            <input type="color" class="color-picker" value="#000000" title="Color Picker">
+        </div>
+        <div class="workspace">
+            <div class="menu-bar">
+                <span class="menu-item" data-menu="file">File
+                    <div class="submenu">
+                        <div class="submenu-item" data-action="new">New</div>
+                        <div class="submenu-item" data-action="open">Open</div>
+                        <div class="submenu-item" data-action="save">Save</div>
+                    </div>
+                </span>
+                <span class="menu-item" data-menu="edit">Edit
+                    <div class="submenu">
+                        <div class="submenu-item" data-action="undo">Undo</div>
+                        <div class="submenu-item" data-action="redo">Redo</div>
+                        <div class="submenu-item" data-action="copy">Copy</div>
+                        <div class="submenu-item" data-action="paste">Paste</div>
+                    </div>
+                </span>
+                <span class="menu-item" data-menu="image">Image
+                    <div class="submenu">
+                        <div class="submenu-item" data-action="resize">Resize</div>
+                        <div class="submenu-item" data-action="rotate">Rotate</div>
+                        <div class="submenu-item" data-action="flip">Flip</div>
+                    </div>
+                </span>
+                <span class="menu-item" data-menu="filter">Filter
+                    <div class="submenu">
+                        <div class="submenu-item" data-action="grayscale">Grayscale</div>
+                        <div class="submenu-item" data-action="invert">Invert</div>
+                        <div class="submenu-item" data-action="blur">Blur</div>
+                    </div>
+                </span>
+            </div>
+            <div class="canvas-area">
+                <canvas id="canvas" width="800" height="600"></canvas>
+            </div>
+        </div>
+        <div class="layers-panel">
+            <h3>Layers</h3>
+            <div id="layers-container"></div>
+            <button id="add-layer">Add Layer</button>
+        </div>
+    </div>
+
+    <div id="text-input-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Enter Text</h2>
+            <input type="text" id="text-input" />
+            <button id="add-text-btn">Add Text</button>
+        </div>
+    </div>
+
+<script>
+class Layer {
+    constructor(canvas) {
+        this.canvas = document.createElement('canvas');
+        this.canvas.width = canvas.width;
+        this.canvas.height = canvas.height;
+        this.ctx = this.canvas.getContext('2d');
+        this.visible = true;
+    }
+}
+
+class PhotoEditor {
+    constructor() {
+        this.canvas = document.getElementById('canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.layers = [new Layer(this.canvas)];
+        this.currentLayer = 0;
+        this.isDrawing = false;
+        this.lastX = 0;
+        this.lastY = 0;
+        this.color = '#000000';
+        this.brushSize = 5;
+        this.currentTool = 'brush';
+        this.undoStack = [];
+        this.redoStack = [];
+
+        this.initializeEventListeners();
+        this.updateLayers();
+    }
+
+    initializeEventListeners() {
+        this.canvas.addEventListener('mousedown', this.startDrawing.bind(this));
+        this.canvas.addEventListener('mousemove', this.draw.bind(this));
+        this.canvas.addEventListener('mouseup', this.stopDrawing.bind(this));
+        this.canvas.addEventListener('mouseout', this.stopDrawing.bind(this));
+
+        document.querySelectorAll('.tool').forEach(tool => {
+            tool.addEventListener('click', (e) => this.setTool(e.currentTarget.dataset.tool));
+        });
+
+        document.querySelector('.color-picker').addEventListener('input', (e) => this.setColor(e.target.value));
+
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                item.querySelector('.submenu').style.display = 'block';
+            });
+            item.addEventListener('mouseleave', () => {
+                item.querySelector('.submenu').style.display = 'none';
+            });
+        });
+
+        document.querySelectorAll('.submenu-item').forEach(item => {
+            item.addEventListener('click', (e) => this.handleMenuAction(e.target.dataset.action));
+        });
+
+        document.getElementById('add-layer').addEventListener('click', () => this.addLayer());
+    }
+
+    startDrawing(e) {
+        this.isDrawing = true;
+        [this.lastX, this.lastY] = [e.offsetX, e.offsetY];
+        this.saveState();
+    }
+
+    draw(e) {
+        if (!this.isDrawing) return;
+        const currentLayer = this.layers[this.currentLayer];
+        
+        switch(this.currentTool) {
+            case 'brush':
+                this.drawLine(currentLayer.ctx, this.lastX, this.lastY, e.offsetX, e.offsetY);
+                break;
+            case 'eraser':
+                this.erase(currentLayer.ctx, e.offsetX, e.offsetY);
+                break;
+            case 'shape':
+                this.drawShape(currentLayer.ctx, this.lastX, this.lastY, e.offsetX, e.offsetY);
+                break;
+        }
+
+        [this.lastX, this.lastY] = [e.offsetX, e.offsetY];
+        this.updateCanvas();
+    }
+
+    stopDrawing() {
+        this.isDrawing = false;
+    }
+
+    drawLine(ctx, x1, y1, x2, y2) {
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.brushSize;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+    }
+
+    erase(ctx, x, y) {
+        ctx.clearRect(x - this.brushSize / 2, y - this.brushSize / 2, this.brushSize, this.brushSize);
+    }
+
+    drawShape(ctx, x1, y1, x2, y2) {
+        ctx.beginPath();
+        ctx.rect(x1, y1, x2 - x1, y2 - y1);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.brushSize;
+        ctx.stroke();
+    }
+
+    setTool(tool) {
+        this.currentTool = tool;
+        document.querySelectorAll('.tool').forEach(t => t.classList.remove('active'));
+        document.querySelector(`[data-tool="${tool}"]`).classList.add('active');
+    }
+
+    setColor(color) {
+        this.color = color;
+    }
+
+    addLayer() {
+        this.layers.push(new Layer(this.canvas));
+        this.currentLayer = this.layers.length - 1;
+        this.updateLayers();
+    }
+
+    updateLayers() {
+        const container = document.getElementById('layers-container');
+        container.innerHTML = '';
+        this.layers.forEach((layer, index) => {
+            const layerDiv = document.createElement('div');
+            layerDiv.className = 'layer';
+            layerDiv.innerHTML = `
+                <input type="checkbox" class="layer-visibility" ${layer.visible ? 'checked' : ''}>
+                <span>Layer ${index + 1}</span>
+            `;
+            layerDiv.querySelector('.layer-visibility').addEventListener('change', (e) => {
+                layer.visible = e.target.checked;
+                this.updateCanvas();
+            });
+            layerDiv.addEventListener('click', () => {
+                this.currentLayer = index;
+                this.updateLayers();
+            });
+            if (index === this.currentLayer) {
+                layerDiv.style.backgroundColor = '#4a4a4a';
+            }
+            container.appendChild(layerDiv);
+        });
+    }
+
+    updateCanvas() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.layers.forEach(layer => {
+            if (layer.visible) {
+                this.ctx.drawImage(layer.canvas, 0, 0);
+            }
+        });
+    }
+
+    saveState() {
+        const state = this.layers.map(layer => {
+            return {
+                data: layer.canvas.toDataURL(),
+                visible: layer.visible
+            };
+        });
+        this.undoStack.push(state);
+        this.redoStack = [];
+    }
+
+    undo() {
+        if (this.undoStack.length > 1) {
+            this.redoStack.push(this.undoStack.pop());
+            this.restoreState(this.undoStack[this.undoStack.length - 1]);
+        }
+    }
+
+    redo() {
+        if (this.redoStack.length > 0) {
+            const state = this.redoStack.pop();
+            this.undoStack.push(state);
+            this.restoreState(state);
+        }
+    }
+
+    restoreState(state) {
+        this.layers = state.map(layerState => {
+            const layer = new Layer(this.canvas);
+            const img = new Image();
+            img.src = layerState.data;
+            img.onload = () => {
+                layer.ctx.drawImage(img, 0, 0);
+                this.updateCanvas();
+            };
+            layer.visible = layerState.visible;
+            return layer;
+        });
+        this.updateLayers();
+    }
+
+    handleMenuAction(action) {
+        switch(action) {
+            case 'new':
+                this.newCanvas();
+                break;
+            case 'open':
+                this.openImage();
+                break;
+            case 'save':
+                this.saveImage();
+                break;
+            case 'undo':
+                this.undo();
+                break;
+            case 'redo':
+                this.redo();
+                break;
+            case 'copy':
+                this.copySelection();
+                break;
+            case 'paste':
+                this.pasteSelection();
+                break;
+            case 'resize':
+                this.resizeImage();
+                break;
+            case 'rotate':
+                this.rotateImage();
+                break;
+            case 'flip':
+                this.flipImage();
+                break;
+            case 'grayscale':
+                this.applyFilter('grayscale');
+                break;
+            case 'invert':
+                this.applyFilter('invert');
+                break;
+            case 'blur':
+                this.applyFilter('blur');
+                break;
+        }
+    }
+
+    newCanvas() {
+        if (confirm('Are you sure you want to create a new canvas? All unsaved changes will be lost.')) {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.layers = [new Layer(this.canvas)];
+            this.currentLayer = 0;
+            this.updateLayers();
+            this.undoStack = [];
+            this.redoStack = [];
+        }
+    }
+
+    openImage() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = event => {
+                const img = new Image();
+                img.onload = () => {
+                    this.canvas.width = img.width;
+                    this.canvas.height = img.height;
+                    this.ctx.drawImage(img, 0, 0);
+                    this.layers = [new Layer(this.canvas)];
+                    this.layers[0].ctx.drawImage(img, 0, 0);
+                    this.currentLayer = 0;
+                    this.updateLayers();
+                    this.updateCanvas();
+                    this.saveState();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
+    }
+
+    saveImage() {
+        const link = document.createElement('a');
+        link.download = 'image.png';
+        link.href = this.canvas.toDataURL();
+        link.click();
+    }
+
+    copySelection() {
+        // In a full implementation, this would copy the current selection
+        console.log('Copy functionality not implemented in this demo');
+    }
+
+    pasteSelection() {
+        // In a full implementation, this would paste the copied selection
+        console.log('Paste functionality not implemented in this demo');
+    }
+
+    resizeImage() {
+        const width = prompt('Enter new width:', this.canvas.width);
+        const height = prompt('Enter new height:', this.canvas.height);
+        if (width && height) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = width;
+            tempCanvas.height = height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(this.canvas, 0, 0, width, height);
+            this.canvas.width = width;
+            this.canvas.height = height;
+            this.ctx.drawImage(tempCanvas, 0, 0);
+            this.layers.forEach(layer => {
+                const layerTemp = document.createElement('canvas');
+                layerTemp.width = width;
+                layerTemp.height = height;
+                const layerTempCtx = layerTemp.getContext('2d');
+                layerTempCtx.drawImage(layer.canvas, 0, 0, width, height);
+                layer.canvas.width = width;
+                layer.canvas.height = height;
+                layer.ctx.drawImage(layerTemp, 0, 0);
+            });
+            this.updateCanvas();
+            this.saveState();
+        }
+    }
+
+    rotateImage() {
+        const angle = prompt('Enter rotation angle in degrees:', '90');
+        if (angle) {
+            const radian = angle * Math.PI / 180;
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = this.canvas.height;
+            tempCanvas.height = this.canvas.width;
+            tempCtx.translate(tempCanvas.width / 2, tempCanvas.height / 2);
+            tempCtx.rotate(radian);
+            tempCtx.drawImage(this.canvas, -this.canvas.width / 2, -this.canvas.height / 2);
+            this.canvas.width = tempCanvas.width;
+            this.canvas.height = tempCanvas.height;
+            this.ctx.drawImage(tempCanvas, 0, 0);
+            this.layers.forEach(layer => {
+                const layerTemp = document.createElement('canvas');
+                const layerTempCtx = layerTemp.getContext('2d');
+                layerTemp.width = tempCanvas.width;
+                layerTemp.height = tempCanvas.height;
+                layerTempCtx.translate(layerTemp.width / 2, layerTemp.height / 2);
+                layerTempCtx.rotate(radian);
+                layerTempCtx.drawImage(layer.canvas, -layer.canvas.width / 2, -layer.canvas.height / 2);
+                layer.canvas.width = layerTemp.width;
+                layer.canvas.height = layerTemp.height;
+                layer.ctx.drawImage(layerTemp, 0, 0);
+            });
+            this.updateCanvas();
+            this.saveState();
+        }
+    }
+
+    flipImage() {
+        const direction = prompt('Enter flip direction (horizontal/vertical):', 'horizontal');
+        if (direction) {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = this.canvas.width;
+            tempCanvas.height = this.canvas.height;
+            if (direction.toLowerCase() === 'horizontal') {
+                tempCtx.translate(tempCanvas.width, 0);
+                tempCtx.scale(-1, 1);
+            } else if (direction.toLowerCase() === 'vertical') {
+                tempCtx.translate(0, tempCanvas.height);
+                tempCtx.scale(1, -1);
+            }
+            tempCtx.drawImage(this.canvas, 0, 0);
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.drawImage(tempCanvas, 0, 0);
+            this.layers.forEach(layer => {
+                const layerTemp = document.createElement('canvas');
+                const layerTempCtx = layerTemp.getContext('2d');
+                layerTemp.width = layer.canvas.width;
+                layerTemp.height = layer.canvas.height;
+                if (direction.toLowerCase() === 'horizontal') {
+                    layerTempCtx.translate(layerTemp.width, 0);
+                    layerTempCtx.scale(-1, 1);
+                } else if (direction.toLowerCase() === 'vertical') {
+                    layerTempCtx.translate(0, layerTemp.height);
+                    layerTempCtx.scale(1, -1);
+                }
+                layerTempCtx.drawImage(layer.canvas, 0, 0);
+                layer.ctx.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
+                layer.ctx.drawImage(layerTemp, 0, 0);
+            });
+            this.updateCanvas();
+            this.saveState();
+        }
+    }
+
+    applyFilter(filter) {
+        const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        const data = imageData.data;
+        switch(filter) {
+            case 'grayscale':
+                for (let i = 0; i < data.length; i += 4) {
+                    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                    data[i] = data[i + 1] = data[i + 2] = avg;
+                }
+                break;
+            case 'invert':
+                for (let i = 0; i < data.length; i += 4) {
+                    data[i] = 255 - data[i];
+                    data[i + 1] = 255 - data[i + 1];
+                    data[i + 2] = 255 - data[i + 2];
+                }
+                break;
+            case 'blur':
+                // Simple box blur
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                const r = 5; // blur radius
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        let red = 0, green = 0, blue = 0;
+                        for (let ky = -r; ky <= r; ky++) {
+                            for (let kx = -r; kx <= r; kx++) {
+                                const idx = ((y + ky) * w + (x + kx)) * 4;
+                                red += data[idx] || 0;
+                                green += data[idx + 1] || 0;
+                                blue += data[idx + 2] || 0;
+                            }
+                        }
+                        const idx = (y * w + x) * 4;
+                        data[idx] = red / ((2 * r + 1) * (2 * r + 1));
+                        data[idx + 1] = green / ((2 * r + 1) * (2 * r + 1));
+                        data[idx + 2] = blue / ((2 * r + 1) * (2 * r + 1));
+                    }
+                }
+                break;
+        }
+        this.ctx.putImageData(imageData, 0, 0);
+        this.layers[this.currentLayer].ctx.putImageData(imageData, 0, 0);
+        this.saveState();
+    }
+}
+
+const editor = new PhotoEditor();
+</script>
+</body></html>

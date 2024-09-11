@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bloc de Notas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 10px;
+        }
+        button {
+            display: block;
+            margin-bottom: 10px;
+        }
+        .note {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 5px;
+        }
+        .delete {
+            color: red;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bloc de Notas</h1>
+    <textarea id="noteContent" placeholder="Escribe una nota..."></textarea>
+    <button onclick="addNote()">Añadir Nota</button>
+    <div id="notesContainer"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            displayNotes();
+        });
+
+        function addNote() {
+            const noteContent = document.getElementById('noteContent').value;
+            if (noteContent) {
+                const notes = JSON.parse(localStorage.getItem('notes')) || [];
+                notes.push(noteContent);
+                localStorage.setItem('notes', JSON.stringify(notes));
+                document.getElementById('noteContent').value = '';
+                displayNotes();
+            }
+        }
+
+        function deleteNote(index) {
+            const notes = JSON.parse(localStorage.getItem('notes')) || [];
+            notes.splice(index, 1);
+            localStorage.setItem('notes', JSON.stringify(notes));
+            displayNotes();
+        }
+
+        function displayNotes() {
+            const notes = JSON.parse(localStorage.getItem('notes')) || [];
+            const notesContainer = document.getElementById('notesContainer');
+            notesContainer.innerHTML = '';
+            notes.forEach((note, index) => {
+                const noteElement = document.createElement('div');
+                noteElement.className = 'note';
+                noteElement.innerHTML = `
+                    ${note} <span class="delete" onclick="deleteNote(${index})">Eliminar</span>
+                `;
+                notesContainer.appendChild(noteElement);
+            });
+        }
+    </script>
+</body>
+</html>
