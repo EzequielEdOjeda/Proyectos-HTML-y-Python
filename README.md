@@ -1,9 +1,9 @@
 # Proyectos HTML y Python
 
-Este repositorio contiene diversos proyectos desarrollados en HTML y Python. Cada proyecto tiene una descripción detallada, instrucciones de instalación y un ejemplo de cómo ejecutar el código.
+Este repositorio contiene diversos proyectos desarrollados en HTML y Python.
 
-![Break Time](PNG/Break.png)
+<img src="PNG/Break.png" alt="Break Time" width="150" height="50">
 
-![Globo Maps](PNG/GloboMaps.png)
+<img src="PNG/GloboMaps.png" alt="Globo Maps" width="150" height="50">
 
-![World Radio](PNG/WorldRadio.png)
+<img src="PNG/WorldRadio.png" alt="World Radio" width="150" height="50">
