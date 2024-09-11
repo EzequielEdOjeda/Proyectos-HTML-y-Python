@@ -6,4 +6,6 @@ Este repositorio contiene diversos proyectos desarrollados en HTML y Python.
 
 ![Globo Maps](PNG/GloboMaps.png)
 
+![Game Soccer](PNG/Soccer.png)
+
 ![World Radio](PNG/WorldRadio.png)
