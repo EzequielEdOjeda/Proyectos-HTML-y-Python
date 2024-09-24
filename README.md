@@ -1,6 +1,6 @@
 # Proyectos HTML y Python
 
-Este repositorio contiene diversos proyectos desarrollados en HTML y Python.
+Este repositorio contiene una variedad de proyectos desarrollados en HTML y Python. Algunos de los proyectos son de mi autoría, mientras que otros han sido tomados o adaptados de fuentes en Internet.
 
 ![Break Time](PNG/Break.png)
 
